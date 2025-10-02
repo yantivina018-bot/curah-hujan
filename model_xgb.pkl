@@ -1,0 +1,44 @@
+import pandas as pd
+import numpy as np
+import joblib
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from xgboost import XGBRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+# 1. Baca data
+df = pd.read_excel("DATA_SK_PALEMBANG.xlsx")
+
+# 2. Bersihkan data (hilangkan baris dengan nilai hilang)
+df = df.dropna()
+
+# 3. Pisahkan fitur dan target
+X = df.drop(columns=["curah_hujan"])
+y = df["curah_hujan"]
+
+# 4. Split data (latih dan uji)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 5. Scaling fitur
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 6. Inisialisasi dan latih model XGBoost
+model = XGBRegressor(n_estimators=50, random_state=42)
+model.fit(X_train_scaled, y_train)
+
+# 7. Evaluasi
+y_pred = model.predict(X_test_scaled)
+print("MAE:", mean_absolute_error(y_test, y_pred))
+print("RMSE:", mean_squared_error(y_test, y_pred, squared=False))
+print("R2:", r2_score(y_test, y_pred))
+
+# 8. Simpan model dan scaler
+joblib.dump(model, "model_xgb.pkl")
+joblib.dump(scaler, "scaler.pkl")
+
+# 9. Simpan data hasil olahan ke CSV
+df.to_csv("data.csv", index=False)
+
+print("Model, scaler, dan data berhasil disimpan.")
